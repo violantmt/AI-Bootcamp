@@ -1,0 +1,186 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Kho văn phòng phẩm — PB03 v10</title>
+<style>body{font:16px system-ui;background:#f3f6fa;color:#183047;margin:0}main{max-width:960px;margin:auto;padding:28px}h1{margin-bottom:8px}section{background:white;padding:24px;border-radius:16px;margin:20px 0;box-shadow:0 3px 15px #1830470a}label{display:block;margin:12px 0}button,select,input{font:inherit;padding:10px;border:1px solid #aab9c6;border-radius:8px}button{cursor:pointer;background:#eaf1f6}button.primary{background:#17675e;color:white}button:disabled{opacity:.45;cursor:not-allowed}.line{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.line input{width:130px}table{width:100%;border-collapse:collapse;text-align:left}td,th{padding:12px 6px;border-bottom:1px solid #e1e7ed}.note{color:#526574}#message{padding:14px;border-radius:8px;background:#eef3f7;white-space:pre-wrap}#catalogMessage.error,#message.error{background:#fff0ec;color:#922b15}#catalogMessage.success,#message.success{background:#e7f5ed;color:#165b36}nav{display:flex;gap:10px;flex-wrap:wrap}summary{cursor:pointer}small{display:block;margin-top:8px}*{box-sizing:border-box}input,select,button{max-width:100%}td,th{overflow-wrap:anywhere}#adjustmentList>div{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}#adjustmentList p{width:100%;overflow-wrap:anywhere}@media(max-width:500px){main{padding:12px}section{padding:16px}.line select{width:100%}}#catalogMessage{padding:16px;border:2px solid #aab9c6;border-radius:10px;margin:16px 0 0;font-weight:600;overflow-wrap:anywhere}#catalogMessage.success{border-color:#278351}#catalogMessage.error{border-color:#c54a32}#catalogMessage:focus{outline:3px solid #246ba8;outline-offset:3px}#createMessage{padding:16px;border:2px solid #aab9c6;border-radius:10px;margin:16px 0;font-weight:600;overflow-wrap:anywhere}#createMessage.success{background:#e7f5ed;color:#165b36;border-color:#278351}#createMessage.error{background:#fff0ec;color:#922b15;border-color:#c54a32}#createMessage:focus{outline:3px solid #246ba8;outline-offset:3px}#reviewMessage{padding:16px;border:2px solid #aab9c6;border-radius:10px;margin:16px 0;font-weight:600;overflow-wrap:anywhere}#reviewMessage.success{background:#e7f5ed;color:#165b36;border-color:#278351}#reviewMessage.error{background:#fff0ec;color:#922b15;border-color:#c54a32}#reviewMessage:focus{outline:3px solid #246ba8;outline-offset:3px}</style>
+<main><p class="note">AI Transformation · PB-03 · Tier 2 · v10</p><h1>Kho văn phòng phẩm</h1><p>Nhập hàng → lưu phiếu → xem tồn và lịch sử.</p><p class="note">Bản học tập dùng dữ liệu giả, API mô phỏng và lưu trên trình duyệt này. Chọn vai trò chỉ mô phỏng quyền, không phải đăng nhập bảo mật.</p>
+<section><label>Người dùng demo <select id="role"><option value="">Chưa chọn</option><option value="keeper">Thủ kho — nhập và xem</option><option value="manager">Quản lý — quản lý danh mục và duyệt giảm tồn</option></select></label><p id="storageNote"></p></section>
+<p id="message" role="status" aria-live="polite">Chọn Thủ kho để bắt đầu.</p><section id="catalog" hidden><h2>Danh mục — tạo hàng mới</h2><p>Chỉ Quản lý được tạo mã. Tồn khởi đầu là 0; Thủ kho nhập bằng phiếu. Có thể chỉnh sửa thông tin hoặc xóa hàng khi tồn bằng 0; lịch sử vẫn được giữ. Mã và đơn vị được khóa nếu đã có tồn/giao dịch.</p><label>Mã hàng <input id="productId" maxlength="30" placeholder="VD: THUOC"></label><label>Tên hàng <input id="productName" maxlength="100" placeholder="VD: Thước kẻ"></label><label>Đơn vị <input id="productUnit" maxlength="30" placeholder="VD: cây"></label><button id="createProduct">Tạo mã hàng</button><p id="createMessage" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" hidden></p><hr><h3>Chỉnh sửa danh mục hàng</h3><label>Chọn hàng <select id="manageProduct"></select></label><label>Mã <input id="editId" maxlength="30"></label><label>Tên <input id="editName" maxlength="100"></label><label>Đơn vị <input id="editUnit" maxlength="30"></label><nav><button id="editProduct">Lưu chỉnh sửa</button><button id="deleteProduct">Xóa hàng</button></nav><div id="deleteConfirmation" hidden><p id="deleteQuestion"></p><button id="confirmDelete">Xác nhận xóa</button> <button id="cancelDelete">Hủy</button></div><p id="catalogMessage" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" hidden></p></section><section id="receiptSection" hidden><h2>Lập phiếu nhập</h2><p id="permission"></p><div id="lines"></div><nav><button id="add">+ Thêm dòng</button><button id="save" class="primary">Lưu phiếu</button></nav><p id="hint"></p></section>
+<section id="adjustmentSection" hidden><h2>Đề nghị giảm tồn</h2><p>Dùng cho mất/hỏng hoặc chênh lệch kiểm kê; không phải phiếu xuất hàng bán. Chỉ khi Quản lý duyệt thì tồn mới giảm.</p><label>Hàng <select id="adjustProduct"></select></label><label>Số lượng giảm <input id="adjustQuantity" type="number" step="1"></label><label>Lý do <input id="adjustReason" maxlength="500" placeholder="VD: 2 cây bút bị hỏng"></label><button id="requestAdjustment">Gửi đề nghị</button></section><section id="reviewSection" hidden><h2>Đề nghị và lịch sử giảm tồn</h2><div id="adjustmentList"></div><p id="reviewMessage" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" hidden></p></section><section><h2>Tồn hiện tại</h2><table><thead><tr><th>Mã</th><th>Hàng</th><th>Tồn</th><th>Đơn vị</th></tr></thead><tbody id="stock"></tbody></table></section>
+<section><h2>Lịch sử phiếu nhập</h2><div id="history"></div></section>
+<section><details><summary>Tự kiểm tra bài</summary><ol><li>Chọn Thủ kho, nhập bút 3: tồn từ 10 lên 13 (nếu dữ liệu còn ban đầu).</li><li>Nhập -3, 0, 1.5: báo lỗi, tồn không đổi.</li><li>Chọn Bút, thêm dòng: dòng mới chọn Sổ. Bút bị vô hiệu hóa ở dòng Sổ; không thêm dòng khi đã chọn hết danh mục.</li><li>Nhập Sổ 10, để dòng Bút trống: báo rõ lỗi ở dòng Bút. Bỏ dòng Bút rồi lưu: Sổ tăng 10.</li><li>Đổi Quản lý: xem và tạo mã hàng, không tạo phiếu nhập.</li><li>Tải lại trang: phiếu và tồn đã lưu vẫn còn.</li></ol><p>Không xóa dữ liệu trình duyệt nếu cần giữ bằng chứng demo. Demo không hỗ trợ nhiều người cùng ghi hoặc dùng cho kho thật.</p></details></section></main><script>const fresh = () => ({products:[{id:'BUT',name:'Bút bi',unit:'cây',stock:10},{id:'SO',name:'Sổ tay',unit:'quyển',stock:20}],receipts:[]});
+const fail=(status,message)=>({status,body:{message}});
+function validate(state,lines){
+ if(!Array.isArray(lines)||!lines.length) return 'Phiếu cần ít nhất một dòng hàng.';
+ for(const [index,l] of lines.entries()){
+  if(!state.products.some(p=>p.id===l.productId&&p.active!==false)) return `Dòng ${index+1}: hãy chọn mã hàng hợp lệ.`;
+  if(!Number.isSafeInteger(l.quantity)||l.quantity<=0) return `Dòng ${index+1} (${l.productId}): số lượng phải là số nguyên lớn hơn 0. Hãy nhập số lượng hoặc bỏ dòng chưa dùng.`;
+ }
+ return null;
+}
+function api(state,role,method,path,payload={},now=()=>new Date().toISOString()){
+ if(!['keeper','manager'].includes(role))return fail(401,'Hãy chọn người dùng demo.');
+ if(method==='GET'&&path==='/api/products')return {status:200,body:structuredClone(state.products)};
+ if(method==='GET'&&path==='/api/receipts')return {status:200,body:structuredClone(state.receipts)};
+ if(method==='POST'&&path==='/api/products'){
+  if(role!=='manager')return fail(403,'Chỉ Quản lý được tạo mã hàng mới.');
+  const id=typeof payload.id==='string'?payload.id.trim().toUpperCase():'';
+  const name=typeof payload.name==='string'?payload.name.trim():'';
+  const unit=typeof payload.unit==='string'?payload.unit.trim():'';
+  if(!/^[A-Z0-9_-]{1,30}$/.test(id)||!name||name.length>100||!unit||unit.length>30)return fail(400,'Nhập mã 1–30 ký tự A-Z, số, _ hoặc -; tên tối đa 100 và đơn vị tối đa 30 ký tự.');
+  if(state.products.some(p=>p.id===id)||(state.deletedProducts||[]).some(p=>p.id===id))return fail(409,'Mã hàng đã tồn tại hoặc đã xóa và giữ trong lịch sử. Hãy dùng mã khác.');
+  const next=structuredClone(state),product={id,name,unit,stock:0};next.products.push(product);
+  next.catalogEvents??=[];next.catalogEvents.push({action:'CREATE_PRODUCT',productId:id,actor:'Quản lý demo',at:now()});
+  return {status:201,body:structuredClone(product),next};
+ }
+
+ const used=id=>state.receipts.some(r=>r.lines.some(l=>l.productId===id))||(state.adjustments||[]).some(a=>a.productId===id)||(state.catalogEvents||[]).some(e=>e.action==='DELETE_PRODUCT'&&e.productId===id);
+ if(method==='POST'&&path==='/api/products/manage'){
+  if(role!=='manager')return fail(403,'Chỉ Quản lý được sửa/xóa danh mục.');
+  const product=state.products.find(p=>p.id===payload.originalId);if(!product)return fail(404,'Không tìm thấy hàng.');
+  const next=structuredClone(state),target=next.products.find(p=>p.id===product.id);
+  if(payload.action==='edit'){
+   const id=String(payload.id||'').trim().toUpperCase(),name=String(payload.name||'').trim(),unit=String(payload.unit||'').trim();
+   if(!/^[A-Z0-9_-]{1,30}$/.test(id)||!name||name.length>100||!unit||unit.length>30)return fail(400,'Mã, tên hoặc đơn vị không hợp lệ.');
+   if(id!==product.id&&(used(product.id)||product.stock!==0))return fail(409,'Hàng đã có tồn hoặc được sử dụng: giữ nguyên mã để bảo toàn lịch sử.');
+   if(unit!==product.unit&&(used(product.id)||product.stock!==0))return fail(409,'Hàng đã sử dụng: không đổi đơn vị để tránh sai số lượng lịch sử.');
+   if(next.products.some(p=>p.id===id&&p.id!==product.id)||(id!==product.id&&(state.deletedProducts||[]).some(p=>p.id===id)))return fail(409,'Mã hàng đã tồn tại.');
+   Object.assign(target,{id,name,unit});
+  }else if(payload.action==='delete'){
+   if(product.stock!==0)return fail(409,`Không thể xóa ${product.id}: còn ${product.stock} ${product.unit} trong kho.`);
+   next.deletedProducts??=[];next.deletedProducts.push({...structuredClone(product),deletedBy:'Quản lý demo',deletedAt:now()});
+   for(const request of next.adjustments||[])if(request.productId===product.id&&request.status==='pending')Object.assign(request,{status:'rejected',reviewedBy:'Quản lý demo',reviewedAt:now(),reviewNote:'Đề nghị đã đóng vì mã hàng được xóa khi tồn bằng 0.'});
+   next.products=next.products.filter(p=>p.id!==product.id);
+  }else if(payload.action==='archive'){
+   if((state.adjustments||[]).some(a=>a.productId===product.id&&a.status==='pending'))return fail(409,'Còn đề nghị chờ duyệt. Hãy xử lý trước khi ngừng sử dụng.');
+   target.active=false;
+  }else if(payload.action==='restore')target.active=true;
+  else return fail(400,'Thao tác không hợp lệ.');
+  next.catalogEvents??=[];next.catalogEvents.push({action:payload.action.toUpperCase()+'_PRODUCT',productId:product.id,before:structuredClone(product),after:payload.action==='delete'?null:structuredClone(target),actor:'Quản lý demo',at:now()});
+  return {status:200,body:{message:'Đã cập nhật danh mục.'},next};
+ }
+ if(method==='POST'&&path==='/api/adjustments'){
+  if(role!=='keeper')return fail(403,'Chỉ Thủ kho gửi đề nghị giảm tồn.');
+  const product=state.products.find(p=>p.id===payload.productId&&p.active!==false);
+  if(!product||!Number.isSafeInteger(payload.quantity)||payload.quantity<=0)return fail(400,'Chọn hàng đang sử dụng và số lượng nguyên lớn hơn 0.');
+  if(payload.quantity>product.stock)return fail(409,'Số lượng đề nghị vượt tồn hiện tại.');
+  if(typeof payload.reason!=='string'||!payload.reason.trim()||payload.reason.trim().length>500)return fail(400,'Cần lý do giảm tồn, tối đa 500 ký tự.');
+  const next=structuredClone(state);next.adjustments??=[];
+  const request={id:'DC-'+(next.adjustments.length+1),productId:product.id,quantity:payload.quantity,reason:payload.reason.trim(),status:'pending',requestedBy:'Thủ kho demo',requestedAt:now()};next.adjustments.push(request);
+  return {status:201,body:structuredClone(request),next};
+ }
+ if(method==='POST'&&path==='/api/adjustments/review'){
+  if(role!=='manager')return fail(403,'Chỉ Quản lý được duyệt/từ chối.');
+  const request=(state.adjustments||[]).find(a=>a.id===payload.id);if(!request)return fail(404,'Không tìm thấy đề nghị.');
+  if(request.status!=='pending')return fail(409,'Đề nghị đã xử lý, không được xử lý lần nữa.');
+  if(!['approve','reject'].includes(payload.action))return fail(400,'Thao tác không hợp lệ.');
+  if(payload.action==='reject'&&(typeof payload.note!=='string'||!payload.note.trim()||payload.note.length>500))return fail(400,'Cần lý do từ chối, tối đa 500 ký tự.');
+  const next=structuredClone(state),item=next.adjustments.find(a=>a.id===request.id),product=next.products.find(p=>p.id===request.productId);
+  if(payload.action==='approve'){
+   if(!product||product.active===false||product.stock<request.quantity)return fail(409,'Không đủ tồn hiện tại hoặc hàng đã ngừng sử dụng; chưa thể duyệt.');
+   item.beforeStock=product.stock;product.stock-=request.quantity;item.afterStock=product.stock;
+  }
+  Object.assign(item,{status:payload.action==='approve'?'approved':'rejected',reviewedBy:'Quản lý demo',reviewedAt:now(),reviewNote:payload.action==='reject'?payload.note.trim():''});
+  return {status:200,body:structuredClone(item),next};
+ }
+ if(method!=='POST'||path!=='/api/receipts')return fail(404,'Không tìm thấy API mock.');
+ if(role!=='keeper')return fail(403,'Chỉ Thủ kho được lập phiếu nhập.');
+ const lines=payload.lines,error=validate(state,lines);if(error)return fail(400,error);
+ if(new Set(lines.map(l=>l.productId)).size!==lines.length)return fail(409,'Phiếu có mã hàng trùng. Mỗi mã chỉ được xuất hiện một dòng; hãy sửa phiếu.');
+ for(const l of lines)if(!Number.isSafeInteger(state.products.find(p=>p.id===l.productId).stock+l.quantity))return fail(400,'Tồn kho vượt giới hạn an toàn.');
+ const next=structuredClone(state),receipt={id:`PN-${state.receipts.length+1}`,at:now(),actor:'Thủ kho demo',lines:structuredClone(lines)};
+ for(const l of lines)next.products.find(p=>p.id===l.productId).stock+=l.quantity;
+ next.receipts.push(receipt);
+ return {status:201,body:structuredClone(receipt),next};
+}
+
+
+const $=id=>document.getElementById(id),key='pb03-warehouse-v1';let state=fresh(),draft=[{productId:'BUT',quantity:''}],blocked=false;
+function message(text,error=false){$('message').textContent=text;$('message').className=error?'error':'success';}
+try{const saved=localStorage.getItem(key);if(saved){const candidate=JSON.parse(saved);if(!Array.isArray(candidate.products)||!Array.isArray(candidate.receipts)||new Set(candidate.products.map(p=>p.id)).size!==candidate.products.length||candidate.products.some(p=>typeof p.id!=='string'||typeof p.name!=='string'||typeof p.unit!=='string'||!Number.isSafeInteger(p.stock)||p.stock<0))throw Error('invalid');state=candidate;}$('storageNote').textContent='Phiếu đã lưu được giữ trên trình duyệt này.';}catch{blocked=true;$('storageNote').textContent='Không đọc được dữ liệu demo. Đã chặn lưu để tránh ghi đè dữ liệu lỗi. Hãy giữ lại dữ liệu và kiểm tra lỗi trình duyệt.';}
+const activeProducts=()=>state.products.filter(p=>p.active!==false);
+const parsed=()=>draft.map(l=>({productId:l.productId,quantity:l.quantity.trim()===''?NaN:Number(l.quantity)}));
+function controls(){
+ const edit=$('role').value==='keeper'&&!blocked;
+ $('receiptSection').hidden=$('role').value!=='keeper';
+ $('adjustmentSection').hidden=$('role').value!=='keeper';$('reviewSection').hidden=!$('role').value;
+ const used=new Set(draft.map(l=>l.productId));
+ $('catalog').hidden=$('role').value!=='manager';$('createProduct').disabled=blocked;$('save').disabled=!edit;$('add').disabled=!edit||used.size>=activeProducts().length;
+ $('hint').textContent=used.size>=activeProducts().length?'Đã chọn hết hàng trong danh mục. Mỗi hàng chỉ xuất hiện một dòng.':'Thêm dòng sẽ chọn một hàng chưa có trên phiếu.';
+ $('permission').textContent=edit?'Bạn đang nhập với vai trò Thủ kho.':'Chỉ Thủ kho được nhập; Quản lý có thể tạo mã hàng ở phần Danh mục.';
+ document.querySelectorAll('#lines input,#lines select,#lines button').forEach(e=>e.disabled=!edit);
+ document.querySelectorAll('#lines select').forEach((select,i)=>{
+  for(const option of select.options)option.disabled=draft.some((l,j)=>j!==i&&l.productId===option.value);
+ });
+}
+function renderDraft(){ $('lines').replaceChildren();draft.forEach((line,i)=>{
+ const row=document.createElement('div');row.className='line';const select=document.createElement('select');select.setAttribute('aria-label',`Hàng dòng ${i+1}`);
+ activeProducts().forEach(p=>{const option=document.createElement('option');option.value=p.id;option.textContent=`${p.id} — ${p.name}`;select.append(option);});select.value=line.productId;
+ select.onchange=()=>{line.productId=select.value;controls();};
+ const input=document.createElement('input');input.type='number';input.step='1';input.placeholder='Số lượng';input.setAttribute('aria-label',`Số lượng dòng ${i+1}`);input.value=line.quantity;input.oninput=()=>line.quantity=input.value;
+ const remove=document.createElement('button');remove.textContent='Bỏ dòng';remove.onclick=()=>{draft.splice(i,1);renderDraft();};row.append(select,input,remove);$('lines').append(row);
+ });controls();}
+function renderData(){ $('stock').replaceChildren();$('history').replaceChildren();if(!$('role').value){$('history').textContent='Chọn người dùng demo để xem dữ liệu.';return;}for(const p of api(state,$('role').value,'GET','/api/products').body){const tr=document.createElement('tr');for(const value of [p.id,p.name+(p.active===false?' (ngừng sử dụng)':''),p.stock,p.unit]){const td=document.createElement('td');td.textContent=value;tr.append(td);}$('stock').append(tr);}if(!state.receipts.length)$('history').textContent='Chưa có phiếu nhập.';for(const r of [...api(state,$('role').value,'GET','/api/receipts').body].reverse()){const item=document.createElement('p');item.textContent=`${r.id} · ${new Date(r.at).toLocaleString('vi-VN')} · ${r.actor} · ${r.lines.map(l=>`${l.productId}: +${l.quantity}`).join(', ')}`;$('history').append(item);}}
+$('role').onchange=()=>{$('reviewMessage').hidden=true;$('createMessage').hidden=true;clearCatalogMessage();renderDraft();renderData();renderExtended();message('Đã đổi vai trò demo. Phiếu nháp chưa được lưu.');};$('add').onclick=()=>{const next=activeProducts().find(p=>!draft.some(l=>l.productId===p.id));if(!next)return;draft.push({productId:next.id,quantity:''});renderDraft();};
+$('save').onclick=()=>{if(blocked)return message('Lưu bị chặn vì dữ liệu lỗi.',true);const r=api(state,$('role').value,'POST','/api/receipts',{lines:parsed()});if(r.status!==201)return message(`${r.status}: ${r.body.message}`,true);try{localStorage.setItem(key,JSON.stringify(r.next));}catch{return message('Không lưu được vào trình duyệt. Phiếu và tồn chưa được cập nhật. Giữ phiếu nháp để thử lại.',true);}state=r.next;renderExtended();draft=activeProducts().length?[{productId:activeProducts()[0].id,quantity:''}]:[];renderDraft();renderData();message(`Đã lưu ${r.body.id}. Tồn và lịch sử đã cập nhật.`);};renderDraft();renderData();
+
+function createFeedback(text,error=false){const el=$('createMessage');el.textContent=text;el.className=error?'error':'success';el.hidden=false;el.focus({preventScroll:true});el.scrollIntoView({block:'nearest',behavior:'instant'});}
+$('createProduct').onclick=()=>{
+ if(blocked)return createFeedback('Dữ liệu lỗi, đã chặn ghi.',true);
+ const r=api(state,$('role').value,'POST','/api/products',{id:$('productId').value,name:$('productName').value,unit:$('productUnit').value});
+ if(r.status!==201)return createFeedback(r.body.message,true);
+ try{localStorage.setItem(key,JSON.stringify(r.next));}catch{return createFeedback('Không lưu được danh mục; chưa tạo mã hàng.',true);}
+ state=r.next;renderExtended();for(const id of ['productId','productName','productUnit'])$(id).value='';renderDraft();renderData();createFeedback(`Tạo mã hàng thành công: ${r.body.id} với tồn 0. Chọn Thủ kho để nhập hàng.`);
+};
+
+function option(select,value,text){const o=document.createElement('option');o.value=value;o.textContent=text;select.append(o);}
+function clearCatalogMessage(){$('catalogMessage').hidden=true;$('catalogMessage').textContent='';}
+function fillEdit(){const p=state.products.find(p=>p.id===$('manageProduct').value);for(const [field,key] of [['editId','id'],['editName','name'],['editUnit','unit']])$(field).value=p?.[key]||'';}
+function renderExtended(){
+ const old=$('manageProduct').value;$('manageProduct').replaceChildren();$('adjustProduct').replaceChildren();
+ state.products.forEach(p=>option($('manageProduct'),p.id,`${p.id} — ${p.name}${p.active===false?' (ngừng sử dụng)':''}`));
+ if(state.products.some(p=>p.id===old))$('manageProduct').value=old;fillEdit();
+ activeProducts().forEach(p=>option($('adjustProduct'),p.id,`${p.name} — tồn ${p.stock}`));
+ $('adjustmentList').replaceChildren();
+ const labels={pending:'Chờ duyệt',approved:'Đã duyệt',rejected:'Từ chối'};
+ for(const r of [...(state.adjustments||[])].reverse()){
+  const box=document.createElement('div'),text=document.createElement('p');
+  text.textContent=`${r.id} · ${r.productId} · giảm ${r.quantity} · ${r.reason} · ${labels[r.status]} · ${r.requestedBy} (${new Date(r.requestedAt).toLocaleString('vi-VN')})${r.reviewedBy?' · '+r.reviewedBy+' ('+new Date(r.reviewedAt).toLocaleString('vi-VN')+')':''}${r.status==='approved'?' · tồn '+r.beforeStock+' → '+r.afterStock:''}${r.reviewNote?' · '+r.reviewNote:''}`;box.append(text);
+  if(r.status==='pending'&&$('role').value==='manager'){
+   const approve=document.createElement('button');approve.textContent='Duyệt '+r.id;approve.onclick=()=>commit('/api/adjustments/review',{id:r.id,action:'approve'},`Duyệt ${r.id} thành công. Tồn kho đã được cập nhật.`);
+   const note=document.createElement('input');note.placeholder='Lý do từ chối';note.setAttribute('aria-label','Lý do từ chối '+r.id);note.maxLength=500;
+   const reject=document.createElement('button');reject.textContent='Từ chối '+r.id;reject.onclick=()=>commit('/api/adjustments/review',{id:r.id,action:'reject',note:note.value},`Từ chối ${r.id} thành công. Tồn kho không thay đổi.`);box.append(approve,note,reject);
+  }$('adjustmentList').append(box);
+ }if(!(state.adjustments||[]).length)$('adjustmentList').textContent='Chưa có đề nghị.';
+}
+function commit(path,payload,success){
+ const notify=(text,error=false)=>{if(path==='/api/adjustments/review'){const el=$('reviewMessage');el.textContent=text;el.className=error?'error':'success';el.hidden=false;el.focus({preventScroll:true});el.scrollIntoView({block:'nearest',behavior:'instant'});}else if(path==='/api/products/manage'){const el=$('catalogMessage');el.textContent=text;el.className=error?'error':'success';el.hidden=false;el.focus({preventScroll:true});el.scrollIntoView({block:'nearest',behavior:'instant'});}else message(text,error);};
+ if(blocked)return notify('Dữ liệu lỗi, đã chặn ghi.',true);
+ const r=api(state,$('role').value,'POST',path,payload);if(r.status>=400)return notify(r.body.message,true);
+ try{localStorage.setItem(key,JSON.stringify(r.next));}catch{return notify('Không lưu được; dữ liệu chưa thay đổi.',true);}
+ state=r.next;draft=draft.filter(l=>activeProducts().some(p=>p.id===l.productId));renderDraft();renderData();renderExtended();if(path==='/api/products/manage'&&payload.action==='edit'){$('manageProduct').value=payload.id.trim().toUpperCase();fillEdit();}notify(success);return true;
+}
+$('manageProduct').onchange=fillEdit;
+
+$('editProduct').onclick=()=>commit('/api/products/manage',{action:'edit',originalId:$('manageProduct').value,id:$('editId').value,name:$('editName').value,unit:$('editUnit').value},'Chỉnh sửa hàng thành công.');
+let pendingDelete=null;
+function catalogFeedback(text,error=false){const el=$('catalogMessage');el.textContent=text;el.className=error?'error':'success';el.hidden=false;el.focus({preventScroll:true});el.scrollIntoView({block:'nearest',behavior:'instant'});}
+function closeDelete(){pendingDelete=null;$('deleteConfirmation').hidden=true;}
+$('deleteProduct').onclick=()=>{
+ closeDelete();
+ const product=state.products.find(p=>p.id===$('manageProduct').value);
+ if(!product)return catalogFeedback('Không thể xóa: chưa chọn mặt hàng.',true);
+ if(product.stock>0)return catalogFeedback(`Không thể xóa ${product.id} — ${product.name}: còn ${product.stock} ${product.unit} trong kho.`,true);
+ pendingDelete=product.id;
+ $('deleteQuestion').textContent=`Xóa ${product.id} — ${product.name} (tồn 0)? Lịch sử vẫn được giữ. Các đề nghị chờ của mã hàng sẽ được đóng.`;
+ $('deleteConfirmation').hidden=false;
+ catalogFeedback(`Mặt hàng ${product.id} có tồn bằng 0. Hãy bấm “Xác nhận xóa” để thực hiện.`);
+ $('confirmDelete').focus();
+};
+$('confirmDelete').onclick=()=>{
+ const product=state.products.find(p=>p.id===pendingDelete);
+ closeDelete();if(!product)return catalogFeedback('Không thể xóa: mã hàng không còn tồn tại.',true);
+ commit('/api/products/manage',{action:'delete',originalId:product.id},`Xóa hàng thành công: ${product.id} — ${product.name}. Danh mục đã được cập nhật.`);
+};
+$('cancelDelete').onclick=()=>{closeDelete();catalogFeedback('Đã hủy xóa. Dữ liệu không thay đổi.');};
+$('manageProduct').onchange=()=>{closeDelete();fillEdit();};
+$('role').addEventListener('change',closeDelete);
+$('requestAdjustment').onclick=()=>{if(commit('/api/adjustments',{productId:$('adjustProduct').value,quantity:$('adjustQuantity').value.trim()===''?NaN:Number($('adjustQuantity').value),reason:$('adjustReason').value},'Đã gửi đề nghị, tồn chưa thay đổi.')){$('adjustQuantity').value='';$('adjustReason').value='';}};
+renderExtended();</script></html>
